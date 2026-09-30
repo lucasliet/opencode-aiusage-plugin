@@ -1,6 +1,6 @@
 /** @jsxImportSource @opentui/solid */
-import type { UsageDocument } from "../usagebar/types";
-import { formatFooterLabel, getRiskyEntries } from "../usagebar/format";
+import type { UsageDocument } from "../usagebar/types.ts";
+import { formatFooterLabel, getRiskyEntries } from "../usagebar/format.ts";
 
 export function FooterText(props: { doc: UsageDocument | null }): string {
   if (props.doc === null) return "";

@@ -1,22 +1,24 @@
 /** @jsxImportSource @opentui/solid */
 import { For, Show } from "solid-js";
 import type { JSX } from "solid-js";
-import type { UsageDocument } from "../usagebar/types";
+import type { UsageDocument } from "../usagebar/types.ts";
+import {
+  formatEntryError,
+  formatEntryHeader,
+  summarizeEntry,
+} from "../usagebar/summary.ts";
 
 export interface UsagePanelProps {
   doc: UsageDocument | null;
   error: string | null;
   loading: boolean;
-  onRefresh: () => void;
-  refreshSeconds?: number;
 }
 
 export function UsagePanel(props: UsagePanelProps): JSX.Element {
-  const interval = (): number => props.refreshSeconds ?? 300;
   return (
-    <>
+    <box flexDirection="column" gap={1}>
       <Show when={props.loading && props.doc === null}>
-        <text>Loading usage quotas…</text>
+        <text>Loading quotas…</text>
       </Show>
       <Show when={props.error !== null && props.error !== ""}>
         <text>{props.error ?? ""}</text>
@@ -24,41 +26,23 @@ export function UsagePanel(props: UsagePanelProps): JSX.Element {
       <Show when={props.doc !== null}>
         <For each={props.doc?.entries ?? []}>
           {(entry) => (
-            <>
-              <text>
-                {entry.display_name || entry.id}
-                {entry.plan ? ` — ${entry.plan}` : ""}
-                {props.doc?.primary === entry.id ? " (primary)" : ""}
-                {entry.stale === true ? " [stale]" : ""}
-              </text>
-              <Show when={entry.error !== null && entry.error !== ""}>
-                <text>{entry.error ?? ""}</text>
-              </Show>
-              <For each={entry.metrics}>
-                {(metric) => (
+            <box flexDirection="column">
+              <text>{formatEntryHeader(entry, props.doc?.primary)}</text>
+              <For each={summarizeEntry(entry)}>
+                {(row) => (
                   <text>
-                    {metric.label} {metric.value}
-                    {metric.detail !== null && metric.detail !== "" ? ` · ${metric.detail}` : ""}
-                    {` [${metric.severity}]`}
+                    {row.label ? `${row.label} · ` : ""}
+                    {row.text}
                   </text>
                 )}
               </For>
-              <Show when={entry.reset_credits !== null}>
-                <text>reset credits available {entry.reset_credits?.available ?? 0}</text>
-                <For each={entry.reset_credits?.credits ?? []}>
-                  {(credit) => (
-                    <text>
-                      {credit.title}
-                      {credit.expires_at !== null && credit.expires_at !== "" ? ` · expires ${credit.expires_at}` : ""}
-                    </text>
-                  )}
-                </For>
+              <Show when={formatEntryError(entry) !== null}>
+                <text>{formatEntryError(entry) ?? ""}</text>
               </Show>
-            </>
+            </box>
           )}
         </For>
       </Show>
-      <text>auto-refresh every {interval()}s · palette: AI Usage: Refresh quotas</text>
-    </>
+    </box>
   );
 }

@@ -8,6 +8,13 @@ import {
   riskiestMetric,
   severityRank,
 } from "../src/usagebar/format";
+import {
+  formatEntryError,
+  formatEntryHeader,
+  formatMetricLine,
+  summarizeEntry,
+  windowLabel,
+} from "../src/usagebar/summary";
 import type {
   UsageDocument,
   UsageEntry,
@@ -325,6 +332,138 @@ describe("isPrimary", () => {
 
   test("false for a non-primary entry", () => {
     expect(isPrimary(openaiEntry, doc)).toBe(false);
+  });
+});
+describe("windowLabel", () => {
+  test("humanizes common windows", () => {
+    expect(windowLabel(18000)).toBe("5h");
+    expect(windowLabel(604800)).toBe("7d");
+    expect(windowLabel(2592000)).toBe("30d");
+  });
+
+  test("empty for null, undefined and non-positive", () => {
+    expect(windowLabel(null)).toBe("");
+    expect(windowLabel(undefined)).toBe("");
+    expect(windowLabel(0)).toBe("");
+  });
+});
+
+describe("formatMetricLine", () => {
+  test("value, resets and pace, dropping the elapsed segment", () => {
+    const line = formatMetricLine(
+      metric({
+        label: "Weekly",
+        percent: 62,
+        value: "62%",
+        detail: "Resets in 3d 9h · 51% elapsed · 11pts ahead",
+        severity: "mid",
+      }),
+    );
+    expect(line).toBe("62% · Resets in 3d 9h · 11pts ahead");
+  });
+
+  test("value and resets only when there is no pace", () => {
+    const line = formatMetricLine(
+      metric({
+        label: "Rolling window (5h)",
+        percent: 0,
+        value: "0%",
+        detail: "Resets in 0h 28m",
+        severity: "low",
+      }),
+    );
+    expect(line).toBe("0% · Resets in 0h 28m");
+  });
+
+  test("on track wording", () => {
+    const line = formatMetricLine(
+      metric({
+        label: "Codex 5h",
+        percent: 0,
+        value: "0%",
+        detail: "Resets in 4h 59m · 0% elapsed · on track",
+        severity: "low",
+      }),
+    );
+    expect(line).toBe("0% · Resets in 4h 59m · on track");
+  });
+});
+
+describe("summarizeEntry", () => {
+  test("keeps only the 5h and 7d windows", () => {
+    const vendor = entry({
+      id: "opencode-go",
+      display_name: "OpenCode Go",
+      metrics: [
+        metric({ label: "Rolling (5h)", percent: 0, value: "0%", detail: "Resets in 2h 31m", severity: "low", window_secs: 18000 }),
+        metric({ label: "Weekly (7d)", percent: 3, value: "3%", detail: "Resets in 4d 4h", severity: "low", window_secs: 604800 }),
+        metric({ label: "Monthly", percent: 53, value: "53%", detail: "Resets in 2d 0h", severity: "mid", window_secs: 2592000 }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows.map((r) => r.label)).toEqual(["5h", "7d"]);
+    expect(rows[0]?.text).toContain("0%");
+    expect(rows[1]?.text).toContain("3%");
+    expect(JSON.stringify(rows)).not.toContain("53%");
+  });
+
+  test("picks the highest-percent metric within a window category", () => {
+    const vendor = entry({
+      id: "antigravity",
+      display_name: "Antigravity",
+      metrics: [
+        metric({ label: "Gemini", percent: 4, value: "4%", detail: "Resets in 4h 21m", severity: "low", window_secs: 18000 }),
+        metric({ label: "Claude & GPT OSS", percent: 40, value: "40%", detail: "Resets in 4h 59m", severity: "mid", window_secs: 18000 }),
+        metric({ label: "Gemini weekly", percent: 16, value: "16%", detail: "Resets in 21h 28m", severity: "low", window_secs: 604800 }),
+        metric({ label: "Claude weekly", percent: 2, value: "2%", detail: "Resets in 6d 23h", severity: "low", window_secs: 604800 }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.text).toContain("40%");
+    expect(rows[1]?.text).toContain("16%");
+  });
+
+  test("single-window fallback for vendors without 5h/7d", () => {
+    const vendor = entry({
+      id: "weird",
+      display_name: "Weird",
+      metrics: [
+        metric({ label: "Daily", percent: 10, value: "10%", detail: "Resets in 3h", severity: "low", window_secs: 86400 }),
+        metric({ label: "Monthly", percent: 20, value: "20%", detail: "Resets in 10d", severity: "low", window_secs: 2592000 }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.label).toBe("1d");
+    expect(rows[0]?.text).toContain("10%");
+  });
+
+  test("empty for vendor without metrics", () => {
+    expect(summarizeEntry(commandcodeEntry)).toEqual([]);
+  });
+});
+
+describe("formatEntryHeader", () => {
+  test("icon, name, plan and primary star", () => {
+    expect(formatEntryHeader(zaiEntry, "zai")).toBe("⚡ Z.AI · GLM Coding Pro ★");
+  });
+
+  test("no star when not primary, no plan segment when null", () => {
+    expect(formatEntryHeader(commandcodeEntry, "zai")).toBe("Command Code");
+  });
+});
+
+describe("formatEntryError", () => {
+  test("null for ready vendors", () => {
+    expect(formatEntryError(zaiEntry)).toBeNull();
+  });
+
+  test("compact single line with vendor name", () => {
+    const line = formatEntryError(commandcodeEntry);
+    expect(line).toContain("Command Code");
+    expect(line).toContain("credentials error");
+    expect(line?.length).toBeLessThan(120);
   });
 });
 
