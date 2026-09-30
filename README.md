@@ -13,10 +13,17 @@ ai-usagebar usage --json | head -c 500
 
 ## Configuration
 
-Config key is `plugins` (with an **s**). Minimal example:
+Install from GitHub with `opencode plugin add github:lucasliet/opencode-aiusage-plugin`.
+
+For configuration options, use the `plugins` key (with an **s**):
 
 ```jsonc
-{ "plugins": [{ "package": "./opencode-aiusage-plugin", "options": { "refreshSeconds": 120 } }] }
+{
+  "plugins": [{
+    "package": "github:lucasliet/opencode-aiusage-plugin",
+    "options": { "refreshSeconds": 120 }
+  }]
+}
 ```
 
 Options:

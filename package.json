@@ -2,6 +2,14 @@
   "name": "opencode-aiusage-plugin",
   "version": "0.1.0",
   "description": "Show ai-usagebar subscription quotas in the OpenCode TUI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucasliet/opencode-aiusage-plugin.git"
+  },
+  "homepage": "https://github.com/lucasliet/opencode-aiusage-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/lucasliet/opencode-aiusage-plugin/issues"
+  },
   "type": "module",
   "main": "./index.ts",
   "exports": {

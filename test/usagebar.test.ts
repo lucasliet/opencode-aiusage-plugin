@@ -359,7 +359,7 @@ describe("formatMetricLine", () => {
         severity: "mid",
       }),
     );
-    expect(line).toBe("62% · Resets in 3d 9h · 11pts ahead");
+    expect(line).toBe("62% · Resets in 3d 9h · ↑ 11pts");
   });
 
   test("value and resets only when there is no pace", () => {
@@ -373,6 +373,12 @@ describe("formatMetricLine", () => {
       }),
     );
     expect(line).toBe("0% · Resets in 0h 28m");
+  });
+
+  test("uses a down arrow for under-pace usage", () => {
+    const line = formatMetricLine(zaiSession);
+    expect(line).toContain("↓ 3pts");
+    expect(line).not.toContain("under");
   });
 
   test("on track wording", () => {
@@ -445,9 +451,9 @@ describe("summarizeEntry", () => {
 });
 
 describe("formatEntryHeader", () => {
-  test("icon, name, plan and primary star", () => {
+  test("name, plan and primary star", () => {
     const withPlan = entry({ ...zaiEntry, plan: "GLM Coding Pro" });
-    expect(formatEntryHeader(withPlan, "zai")).toBe("⚡ Z.AI · GLM Coding Pro ★");
+    expect(formatEntryHeader(withPlan, "zai")).toBe("Z.AI · GLM Coding Pro ★");
   });
 
   test("no star when not primary, no plan segment when null", () => {

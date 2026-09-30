@@ -27,7 +27,7 @@ function highestPercent(metrics: UsageMetric[]): UsageMetric | null {
   return best ?? metrics[0] ?? null;
 }
 
-/** "Resets in 4h 07m · 4% elapsed · 3pts under" → "1% · Resets in 4h 07m · 3pts under" segments. */
+/** Formats the metric value, reset countdown, and compact pace indicator. */
 export function formatMetricLine(metric: UsageMetric): string {
   const parts: string[] = [];
   if (metric.value) parts.push(metric.value);
@@ -39,7 +39,8 @@ export function formatMetricLine(metric: UsageMetric): string {
   if (resets) parts.push(resets);
   const pace = parsePace(detail);
   if (pace) {
-    parts.push(pace.kind === "ontrack" ? "on track" : `${pace.points}pts ${pace.kind}`);
+    if (pace.kind === "ontrack") parts.push("on track");
+    else parts.push(`${pace.kind === "ahead" ? "↑" : "↓"} ${pace.points}pts`);
   }
   return parts.join(" · ");
 }
@@ -58,11 +59,10 @@ export function summarizeEntry(entry: UsageEntry): UsageRow[] {
 }
 
 export function formatEntryHeader(entry: UsageEntry, primaryId: string | null | undefined): string {
-  const icon = entry.icon ? `${entry.icon} ` : "";
   const name = entry.display_name || entry.id;
   const plan = entry.plan ? ` · ${entry.plan}` : "";
   const star = primaryId === entry.id ? " ★" : "";
-  return `${icon}${name}${plan}${star}`;
+  return `${name}${plan}${star}`;
 }
 
 export function formatEntryError(entry: UsageEntry): string | null {
