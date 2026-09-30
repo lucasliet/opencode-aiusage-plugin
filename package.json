@@ -1,0 +1,39 @@
+{
+  "name": "opencode-aiusage-plugin",
+  "version": "0.1.0",
+  "description": "Show ai-usagebar subscription quotas in the OpenCode TUI",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./tui": "./tui.tsx"
+  },
+  "files": [
+    "index.ts",
+    "tui.tsx",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "ai-usagebar",
+    "quota",
+    "usage",
+    "tui"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@opencode/plugin": ">=2.0.0"
+  },
+  "devDependencies": {
+    "@opencode/plugin": "2.0.15",
+    "@opentui/core": "0.5.10",
+    "@opentui/solid": "0.5.10",
+    "@types/node": "^22.0.0",
+    "bun-types": "^1.4.2",
+    "solid-js": "1.9.15",
+    "typescript": "latest"
+  }
+}
