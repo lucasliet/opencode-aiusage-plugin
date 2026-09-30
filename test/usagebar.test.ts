@@ -446,7 +446,8 @@ describe("summarizeEntry", () => {
 
 describe("formatEntryHeader", () => {
   test("icon, name, plan and primary star", () => {
-    expect(formatEntryHeader(zaiEntry, "zai")).toBe("⚡ Z.AI · GLM Coding Pro ★");
+    const withPlan = entry({ ...zaiEntry, plan: "GLM Coding Pro" });
+    expect(formatEntryHeader(withPlan, "zai")).toBe("⚡ Z.AI · GLM Coding Pro ★");
   });
 
   test("no star when not primary, no plan segment when null", () => {
