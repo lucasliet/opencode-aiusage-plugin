@@ -3,7 +3,6 @@ import {
   formatFooterLabel,
   getRiskyEntries,
   isMetricAtRisk,
-  isPrimary,
   parsePace,
   riskiestMetric,
   severityRank,
@@ -325,15 +324,6 @@ describe("formatFooterLabel", () => {
   });
 });
 
-describe("isPrimary", () => {
-  test("true for the primary entry", () => {
-    expect(isPrimary(zaiEntry, doc)).toBe(true);
-  });
-
-  test("false for a non-primary entry", () => {
-    expect(isPrimary(openaiEntry, doc)).toBe(false);
-  });
-});
 describe("windowLabel", () => {
   test("humanizes common windows", () => {
     expect(windowLabel(18000)).toBe("5h");
@@ -451,13 +441,13 @@ describe("summarizeEntry", () => {
 });
 
 describe("formatEntryHeader", () => {
-  test("name, plan and primary star", () => {
+  test("name and plan", () => {
     const withPlan = entry({ ...zaiEntry, plan: "GLM Coding Pro" });
-    expect(formatEntryHeader(withPlan, "zai")).toBe("Z.AI · GLM Coding Pro ★");
+    expect(formatEntryHeader(withPlan)).toBe("Z.AI · GLM Coding Pro");
   });
 
-  test("no star when not primary, no plan segment when null", () => {
-    expect(formatEntryHeader(commandcodeEntry, "zai")).toBe("Command Code");
+  test("no plan segment when null", () => {
+    expect(formatEntryHeader(commandcodeEntry)).toBe("Command Code");
   });
 });
 

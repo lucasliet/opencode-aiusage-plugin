@@ -58,11 +58,10 @@ export function summarizeEntry(entry: UsageEntry): UsageRow[] {
   return rows.map((metric) => ({ label: windowLabel(metric.window_secs), text: formatMetricLine(metric) }));
 }
 
-export function formatEntryHeader(entry: UsageEntry, primaryId: string | null | undefined): string {
+export function formatEntryHeader(entry: UsageEntry): string {
   const name = entry.display_name || entry.id;
   const plan = entry.plan ? ` · ${entry.plan}` : "";
-  const star = primaryId === entry.id ? " ★" : "";
-  return `${name}${plan}${star}`;
+  return `${name}${plan}`;
 }
 
 export function formatEntryError(entry: UsageEntry): string | null {

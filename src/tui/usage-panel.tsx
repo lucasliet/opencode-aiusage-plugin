@@ -27,7 +27,7 @@ export function UsagePanel(props: UsagePanelProps): JSX.Element {
         <For each={props.doc?.entries ?? []}>
           {(entry) => (
             <box flexDirection="column">
-              <text>{formatEntryHeader(entry, props.doc?.primary)}</text>
+              <text>{formatEntryHeader(entry)}</text>
               <For each={summarizeEntry(entry)}>
                 {(row) => (
                   <text>

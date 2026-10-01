@@ -59,10 +59,6 @@ export function getRiskyEntries(
   return out;
 }
 
-export function isPrimary(entry: UsageEntry, doc: UsageDocument): boolean {
-  return doc.primary === entry.id;
-}
-
 export function formatFooterLabel(entry: UsageEntry, metric: UsageMetric): string {
   const rawValue = metric.value;
   const value =
