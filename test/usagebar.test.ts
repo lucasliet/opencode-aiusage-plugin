@@ -386,21 +386,36 @@ describe("formatMetricLine", () => {
 });
 
 describe("summarizeEntry", () => {
-  test("keeps only the 5h and 7d windows", () => {
+  test("keeps the 5h, 7d and 30d windows for opencode-go", () => {
     const vendor = entry({
       id: "opencode-go",
       display_name: "OpenCode Go",
       metrics: [
         metric({ label: "Rolling (5h)", percent: 0, value: "0%", detail: "Resets in 2h 31m", severity: "low", window_secs: 18000 }),
         metric({ label: "Weekly (7d)", percent: 3, value: "3%", detail: "Resets in 4d 4h", severity: "low", window_secs: 604800 }),
-        metric({ label: "Monthly", percent: 53, value: "53%", detail: "Resets in 2d 0h", severity: "mid", window_secs: 2592000 }),
+        metric({ label: "Monthly", percent: 53, value: "53%", detail: "Resets in 2d 0h", severity: "mid", window_secs: null }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows.map((r) => r.label)).toEqual(["5h", "7d", "30d"]);
+    expect(rows[0]?.text).toContain("0%");
+    expect(rows[1]?.text).toContain("3%");
+    expect(rows[2]?.text).toContain("53%");
+  });
+
+  test("ignores MCP monthly quotas from other vendors", () => {
+    const vendor = entry({
+      id: "zai",
+      display_name: "Z.AI",
+      metrics: [
+        metric({ label: "Session (5h)", percent: 7, value: "7%", detail: "Resets in 4h 38m", severity: "low", window_secs: 18000 }),
+        metric({ label: "Weekly", percent: 72, value: "72%", detail: "Resets in 2d 1h", severity: "high", window_secs: 604800 }),
+        metric({ label: "MCP tools (monthly)", percent: 16, value: "16%", detail: "Resets in 12d 0h", severity: "low", window_secs: 2592000 }),
       ],
     });
     const rows = summarizeEntry(vendor);
     expect(rows.map((r) => r.label)).toEqual(["5h", "7d"]);
-    expect(rows[0]?.text).toContain("0%");
-    expect(rows[1]?.text).toContain("3%");
-    expect(JSON.stringify(rows)).not.toContain("53%");
+    expect(JSON.stringify(rows)).not.toContain("16%");
   });
 
   test("picks the highest-percent metric within a window category", () => {

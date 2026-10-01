@@ -46,16 +46,33 @@ export function formatMetricLine(metric: UsageMetric): string {
 }
 
 /**
- * Compact per-vendor rows: at most the 5h and 7d windows (highest-percent metric each).
+ * opencode-go reports its monthly LLM quota with window_secs null, so the 30d row
+ * is matched by label. Scoped to this entry only: z.ai's "MCP tools (monthly)" is
+ * an MCP quota and must not surface.
+ */
+const MONTHLY_LLM_ENTRY_ID = "opencode-go";
+
+function monthlyLlmMetric(entry: UsageEntry): UsageMetric | null {
+  if (entry.id !== MONTHLY_LLM_ENTRY_ID) return null;
+  return entry.metrics.find((m) => /monthly/i.test(m.label)) ?? null;
+}
+
+/**
+ * Compact per-vendor rows: at most the 5h and 7d windows (highest-percent metric each),
+ * plus a 30d row exclusively for opencode-go.
  * Vendors with neither window fall back to a single row from their first metric.
  */
 export function summarizeEntry(entry: UsageEntry): UsageRow[] {
   const metrics = entry.metrics ?? [];
   const short = highestPercent(metrics.filter((m) => m.window_secs === SHORT_WINDOW_SECS));
   const weekly = highestPercent(metrics.filter((m) => m.window_secs === WEEKLY_WINDOW_SECS));
-  const picked = [short, weekly].filter((m): m is UsageMetric => m !== null);
+  const monthly = monthlyLlmMetric(entry);
+  const picked = [short, weekly, monthly].filter((m): m is UsageMetric => m !== null);
   const rows = picked.length > 0 ? picked : metrics.length > 0 ? [metrics[0]!] : [];
-  return rows.map((metric) => ({ label: windowLabel(metric.window_secs), text: formatMetricLine(metric) }));
+  return rows.map((metric) => ({
+    label: metric === monthly ? "30d" : windowLabel(metric.window_secs),
+    text: formatMetricLine(metric),
+  }));
 }
 
 export function formatEntryHeader(entry: UsageEntry): string {
