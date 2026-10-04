@@ -9,13 +9,22 @@ export interface UsageRow {
   text: string;
 }
 
-/** Humanizes a window length: 18000 → "5h", 604800 → "7d", 2592000 → "30d". */
+const WINDOW_UNITS: ReadonlyArray<{ suffix: string; secs: number }> = [
+  { suffix: "d", secs: 86400 },
+  { suffix: "h", secs: 3600 },
+  { suffix: "m", secs: 60 },
+];
+
+/**
+ * Humanizes a window length using the largest unit that fits, rounded to the nearest
+ * whole number: 18000 → "5h", 604800 → "7d", 539419 → "6d" (vendors such as Grok Bot
+ * report windows that are not exact multiples), 45 → "45s".
+ */
 export function windowLabel(secs: number | null | undefined): string {
   if (typeof secs !== "number" || !Number.isFinite(secs) || secs <= 0) return "";
-  if (secs >= 86400 && secs % 86400 === 0) return `${secs / 86400}d`;
-  if (secs >= 3600 && secs % 3600 === 0) return `${secs / 3600}h`;
-  if (secs >= 60 && secs % 60 === 0) return `${secs / 60}m`;
-  return `${secs}s`;
+  const unit = WINDOW_UNITS.find((candidate) => secs >= candidate.secs);
+  if (!unit) return `${Math.round(secs)}s`;
+  return `${Math.round(secs / unit.secs)}${unit.suffix}`;
 }
 
 function highestPercent(metrics: UsageMetric[]): UsageMetric | null {

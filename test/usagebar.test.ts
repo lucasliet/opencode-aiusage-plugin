@@ -331,6 +331,15 @@ describe("windowLabel", () => {
     expect(windowLabel(2592000)).toBe("30d");
   });
 
+  test("rounds non-exact windows to the nearest unit of the largest fitting magnitude", () => {
+    expect(windowLabel(539419)).toBe("6d");
+    expect(windowLabel(2678400)).toBe("31d");
+    expect(windowLabel(5400)).toBe("2h");
+    expect(windowLabel(3600)).toBe("1h");
+    expect(windowLabel(90)).toBe("2m");
+    expect(windowLabel(45)).toBe("45s");
+  });
+
   test("empty for null, undefined and non-positive", () => {
     expect(windowLabel(null)).toBe("");
     expect(windowLabel(undefined)).toBe("");
