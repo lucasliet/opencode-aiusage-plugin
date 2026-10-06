@@ -12,32 +12,33 @@ export interface UsagePanelProps {
   doc: UsageDocument | null;
   error: string | null;
   loading: boolean;
+  fg: string;
 }
 
 export function UsagePanel(props: UsagePanelProps): JSX.Element {
   return (
     <box flexDirection="column" gap={1}>
       <Show when={props.loading && props.doc === null}>
-        <text>Loading quotas…</text>
+        <text fg={props.fg}>Loading quotas…</text>
       </Show>
       <Show when={props.error !== null && props.error !== ""}>
-        <text>{props.error ?? ""}</text>
+        <text fg={props.fg}>{props.error ?? ""}</text>
       </Show>
       <Show when={props.doc !== null}>
         <For each={props.doc?.entries ?? []}>
           {(entry) => (
             <box flexDirection="column">
-              <text>{formatEntryHeader(entry)}</text>
+              <text fg={props.fg}>{formatEntryHeader(entry)}</text>
               <For each={summarizeEntry(entry)}>
                 {(row) => (
-                  <text>
+                  <text fg={props.fg}>
                     {row.label ? `${row.label} · ` : ""}
                     {row.text}
                   </text>
                 )}
               </For>
               <Show when={formatEntryError(entry) !== null}>
-                <text>{formatEntryError(entry) ?? ""}</text>
+                <text fg={props.fg}>{formatEntryError(entry) ?? ""}</text>
               </Show>
             </box>
           )}

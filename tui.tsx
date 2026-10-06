@@ -51,7 +51,7 @@ export default Plugin.define({
 
     const stopSidebar = context.ui.slot({
       append: "sidebar.content",
-      render: () => <UsagePanel doc={doc()} error={error()} loading={loading()} />,
+      render: () => <UsagePanel doc={doc()} error={error()} loading={loading()} fg={context.theme.text.muted} />,
     });
     const stopApp = context.ui.slot({
       append: "app",
