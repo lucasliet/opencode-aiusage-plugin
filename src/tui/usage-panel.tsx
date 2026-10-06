@@ -30,11 +30,17 @@ export function UsagePanel(props: UsagePanelProps): JSX.Element {
             <box flexDirection="column">
               <text fg={props.fg}>{formatEntryHeader(entry)}</text>
               <For each={summarizeEntry(entry)}>
-                {(row) => (
-                  <text fg={props.fg}>
-                    {row.label ? `${row.label} · ` : ""}
-                    {row.text}
-                  </text>
+                {(row, index) => (
+                  <>
+                    <Show when={row.group && row.group !== summarizeEntry(entry)[index() - 1]?.group}>
+                      <text fg={props.fg}>{row.group}</text>
+                    </Show>
+                    <text fg={props.fg}>
+                      {row.group ? "  " : ""}
+                      {row.label ? `${row.label} · ` : ""}
+                      {row.text}
+                    </text>
+                  </>
                 )}
               </For>
               <Show when={formatEntryError(entry) !== null}>

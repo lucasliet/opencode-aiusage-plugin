@@ -7,6 +7,7 @@ const WEEKLY_WINDOW_SECS = 604800;
 export interface UsageRow {
   label: string;
   text: string;
+  group?: string;
 }
 
 const WINDOW_UNITS: ReadonlyArray<{ suffix: string; secs: number }> = [
@@ -67,12 +68,37 @@ function monthlyLlmMetric(entry: UsageEntry): UsageMetric | null {
 }
 
 /**
+ * Antigravity meters Gemini and Claude & GPT OSS as independent quotas per window,
+ * so each one gets its own row instead of being collapsed into the highest percent.
+ */
+const PER_MODEL_ENTRY_ID = "antigravity";
+
+function summarizePerModel(entry: UsageEntry): UsageRow[] {
+  const models = [...new Set(entry.metrics.map((metric) => metric.label))];
+  return models.flatMap((model) =>
+    [SHORT_WINDOW_SECS, WEEKLY_WINDOW_SECS].flatMap((windowSecs) =>
+      entry.metrics
+        .filter((metric) => metric.label === model && metric.window_secs === windowSecs)
+        .map((metric) => ({
+          group: model,
+          label: windowLabel(windowSecs),
+          text: formatMetricLine(metric),
+        })),
+    ),
+  );
+}
+
+/**
  * Compact per-vendor rows: at most the 5h and 7d windows (highest-percent metric each),
  * plus a 30d row exclusively for opencode-go.
  * Vendors with neither window fall back to a single row from their first metric.
  */
 export function summarizeEntry(entry: UsageEntry): UsageRow[] {
   const metrics = entry.metrics ?? [];
+  if (entry.id === PER_MODEL_ENTRY_ID) {
+    const rows = summarizePerModel(entry);
+    if (rows.length > 0) return rows;
+  }
   const short = highestPercent(metrics.filter((m) => m.window_secs === SHORT_WINDOW_SECS));
   const weekly = highestPercent(metrics.filter((m) => m.window_secs === WEEKLY_WINDOW_SECS));
   const monthly = monthlyLlmMetric(entry);
@@ -86,7 +112,8 @@ export function summarizeEntry(entry: UsageEntry): UsageRow[] {
 
 export function formatEntryHeader(entry: UsageEntry): string {
   const name = entry.display_name || entry.id;
-  const plan = entry.plan ? ` · ${entry.plan}` : "";
+  const showPlan = entry.plan && entry.plan.toLowerCase() !== name.toLowerCase();
+  const plan = showPlan ? ` · ${entry.plan}` : "";
   return `${name}${plan}`;
 }
 

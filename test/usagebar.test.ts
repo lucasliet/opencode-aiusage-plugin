@@ -395,6 +395,27 @@ describe("formatMetricLine", () => {
 });
 
 describe("summarizeEntry", () => {
+  test("shows Gemini and Claude & GPT OSS quotas separately for antigravity", () => {
+    const vendor = entry({
+      id: "antigravity",
+      display_name: "Antigravity",
+      metrics: [
+        metric({ label: "Gemini", percent: 5, value: "5%", detail: "Resets in 3h 14m", severity: "low", window_secs: 18000 }),
+        metric({ label: "Claude & GPT OSS", percent: 0, value: "0%", detail: "Resets in 4h 24m", severity: "low", window_secs: 18000 }),
+        metric({ label: "Gemini", percent: 12, value: "12%", detail: "Resets in 1d 22h", severity: "low", window_secs: 604800 }),
+        metric({ label: "Claude & GPT OSS", percent: 48, value: "48%", detail: "Resets in 5d 16h", severity: "low", window_secs: 604800 }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows.map((r) => `${r.group} ${r.label}`)).toEqual([
+      "Gemini 5h",
+      "Gemini 7d",
+      "Claude & GPT OSS 5h",
+      "Claude & GPT OSS 7d",
+    ]);
+    expect(rows[3]?.text).toContain("48%");
+  });
+
   test("keeps the 5h, 7d and 30d windows for opencode-go", () => {
     const vendor = entry({
       id: "opencode-go",
@@ -429,8 +450,8 @@ describe("summarizeEntry", () => {
 
   test("picks the highest-percent metric within a window category", () => {
     const vendor = entry({
-      id: "antigravity",
-      display_name: "Antigravity",
+      id: "multi-model",
+      display_name: "Multi Model",
       metrics: [
         metric({ label: "Gemini", percent: 4, value: "4%", detail: "Resets in 4h 21m", severity: "low", window_secs: 18000 }),
         metric({ label: "Claude & GPT OSS", percent: 40, value: "40%", detail: "Resets in 4h 59m", severity: "mid", window_secs: 18000 }),
