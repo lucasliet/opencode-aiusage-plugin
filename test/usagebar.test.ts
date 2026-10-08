@@ -416,6 +416,26 @@ describe("summarizeEntry", () => {
     expect(rows[3]?.text).toContain("48%");
   });
 
+  test("shows Cursor Models and Other Models separately for cursor", () => {
+    const vendor = entry({
+      id: "cursor",
+      display_name: "Cursor",
+      metrics: [
+        metric({ label: "Cursor Models", percent: 49, value: "49%", detail: "Auto + Composer · 21% elapsed · 28pts ahead", severity: "low", window_secs: 2678400 }),
+        metric({ label: "Other Models", percent: 100, value: "100%", detail: "Named / API models · on-demand off · 21% elapsed · 79pts ahead", severity: "critical", window_secs: 2678400 }),
+      ],
+    });
+    const rows = summarizeEntry(vendor);
+    expect(rows.map((r) => `${r.group} ${r.label}`)).toEqual([
+      "Cursor Models 31d",
+      "Other Models 31d",
+    ]);
+    expect(rows[0]?.text).toContain("49%");
+    expect(rows[0]?.text).toContain("↑ 28pts");
+    expect(rows[1]?.text).toContain("100%");
+    expect(rows[1]?.text).toContain("↑ 79pts");
+  });
+
   test("keeps the 5h, 7d and 30d windows for opencode-go", () => {
     const vendor = entry({
       id: "opencode-go",

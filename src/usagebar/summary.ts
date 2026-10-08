@@ -69,14 +69,21 @@ function monthlyLlmMetric(entry: UsageEntry): UsageMetric | null {
 
 /**
  * Antigravity meters Gemini and Claude & GPT OSS as independent quotas per window,
+ * and Cursor meters Cursor Models and Other Models as independent monthly quotas,
  * so each one gets its own row instead of being collapsed into the highest percent.
  */
-const PER_MODEL_ENTRY_ID = "antigravity";
+const PER_MODEL_ENTRY_IDS: ReadonlySet<string> = new Set(["antigravity", "cursor"]);
 
 function summarizePerModel(entry: UsageEntry): UsageRow[] {
   const models = [...new Set(entry.metrics.map((metric) => metric.label))];
+  const windows = [...new Set(entry.metrics.map((metric) => metric.window_secs))].sort((a, b) => {
+    if (a === b) return 0;
+    if (a === null || a === undefined) return 1;
+    if (b === null || b === undefined) return -1;
+    return a - b;
+  });
   return models.flatMap((model) =>
-    [SHORT_WINDOW_SECS, WEEKLY_WINDOW_SECS].flatMap((windowSecs) =>
+    windows.flatMap((windowSecs) =>
       entry.metrics
         .filter((metric) => metric.label === model && metric.window_secs === windowSecs)
         .map((metric) => ({
@@ -90,12 +97,13 @@ function summarizePerModel(entry: UsageEntry): UsageRow[] {
 
 /**
  * Compact per-vendor rows: at most the 5h and 7d windows (highest-percent metric each),
- * plus a 30d row exclusively for opencode-go.
+ * plus a 30d row exclusively for opencode-go. Antigravity and Cursor report
+ * independent per-model quotas, so each model gets its own row.
  * Vendors with neither window fall back to a single row from their first metric.
  */
 export function summarizeEntry(entry: UsageEntry): UsageRow[] {
   const metrics = entry.metrics ?? [];
-  if (entry.id === PER_MODEL_ENTRY_ID) {
+  if (PER_MODEL_ENTRY_IDS.has(entry.id)) {
     const rows = summarizePerModel(entry);
     if (rows.length > 0) return rows;
   }
